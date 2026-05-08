@@ -1,0 +1,30 @@
+name: 'Publish Template to ElasticClaw Hub'
+description: 'Push a single template directory to an ElasticClaw hub'
+author: 'Marc Campbell <marc.e.campbell@gmail.com>'
+inputs:
+  hub-endpoint:
+    description: 'ElasticClaw hub URL (e.g., https://hub.elasticclaw.dev)'
+    required: true
+  token:
+    description: 'ElasticClaw hub API token'
+    required: true
+  path:
+    description: 'Path to the template directory'
+    required: true
+  name:
+    description: 'Template name override (default: directory basename)'
+    required: false
+  dry-run:
+    description: 'Validate only, do not push'
+    required: false
+    default: 'false'
+outputs:
+  name:
+    description: 'Template name that was pushed'
+  files:
+    description: 'Number of files in the template'
+  pushed:
+    description: 'Whether the template was actually pushed (false if dry-run)'
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
