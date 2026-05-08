@@ -9,7 +9,7 @@ inputs:
     description: 'ElasticClaw hub API token'
     required: true
   path:
-    description: 'Path to the factory YAML/JSON file'
+    description: 'Path to the factory directory'
     required: true
   dry-run:
     description: 'Validate only, do not push'

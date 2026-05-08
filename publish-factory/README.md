@@ -5,11 +5,11 @@ Push a single factory definition to an ElasticClaw hub.
 ## Usage
 
 ```yaml
-- uses: elasticclaw/publish-factory@v1
+- uses: elasticclaw/actions/publish-factory@main
   with:
     hub-endpoint: https://hub.elasticclaw.dev
     token: ${{ secrets.ELASTICCLAW_TOKEN }}
-    path: factories/my-factory.yaml
+    path: ./factories/my-factory
 ```
 
 ## Inputs
@@ -18,7 +18,7 @@ Push a single factory definition to an ElasticClaw hub.
 |-------|----------|---------|-------------|
 | `hub-endpoint` | yes | — | ElasticClaw hub URL |
 | `token` | yes | — | ElasticClaw hub API token |
-| `path` | yes | — | Path to factory YAML/JSON file |
+| `path` | yes | — | Path to factory directory |
 | `dry-run` | no | `false` | Validate only, do not push |
 
 ## Outputs
@@ -28,28 +28,27 @@ Push a single factory definition to an ElasticClaw hub.
 | `name` | Factory name that was pushed |
 | `pushed` | `true` or `false` (dry-run) |
 
-## Factory File Format
+## Factory Directory
 
-The factory file can contain a single factory object or an array of factory objects:
+The action walks the directory recursively and reads all text files. It expects a `factory.yaml` (or `factory.yml`) as the main configuration file. If `pipeline.yaml` (or `pipeline.yml`) exists, it is automatically injected into the factory config as `pipeline_yaml`.
 
-```yaml
-name: my-factory
-integration: github
-workspace: my-workspace
-trigger_status: todo
-done_status: done
-template: default
 ```
+my-factory/
+├── factory.yaml
+└── pipeline.yaml
+```
+
+Binary files will cause the action to fail.
 
 ## Dry Run
 
-Use `dry-run: true` to validate the factory file without pushing:
+Use `dry-run: true` to validate the factory directory without pushing:
 
 ```yaml
-- uses: elasticclaw/publish-factory@v1
+- uses: elasticclaw/actions/publish-factory@main
   with:
     hub-endpoint: https://hub.elasticclaw.dev
     token: ${{ secrets.ELASTICCLAW_TOKEN }}
-    path: factories/my-factory.yaml
+    path: ./factories/my-factory
     dry-run: true
 ```

@@ -13,7 +13,7 @@ Push a single factory definition to an ElasticClaw hub.
   with:
     hub-endpoint: https://hub.elasticclaw.dev
     token: ${{ secrets.ELASTICCLAW_TOKEN }}
-    path: factories/my-factory.yaml
+    path: ./factories/my-factory
 ```
 
 ### [`publish-template`](./publish-template)

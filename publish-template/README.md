@@ -5,7 +5,7 @@ Push a single template directory to an ElasticClaw hub.
 ## Usage
 
 ```yaml
-- uses: elasticclaw/publish-template@v1
+- uses: elasticclaw/actions/publish-template@main
   with:
     hub-endpoint: https://hub.elasticclaw.dev
     token: ${{ secrets.ELASTICCLAW_TOKEN }}
@@ -45,10 +45,10 @@ The template name defaults to the directory basename (`my-template` in the examp
 
 ## Dry Run
 
-Use `dry-run: true` to validate the template without pushing:
+Use `dry-run: true` to validate the template directory without pushing:
 
 ```yaml
-- uses: elasticclaw/publish-template@v1
+- uses: elasticclaw/actions/publish-template@main
   with:
     hub-endpoint: https://hub.elasticclaw.dev
     token: ${{ secrets.ELASTICCLAW_TOKEN }}
