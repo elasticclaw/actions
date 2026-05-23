@@ -23,7 +23,6 @@ interface WorkflowConfig {
   working_status?: string;
   finished_status?: string;
   terminate_on_leave?: boolean;
-  template: string;
   provider?: string;
   name_pattern?: string;
   tags?: string[];
@@ -131,9 +130,6 @@ async function run(): Promise<void> {
         const workflow = parseYamlObject<WorkflowConfig>(files[workflowPath], workflowPath);
         if (!workflow.name) {
           throw new Error('missing required field: name');
-        }
-        if (!workflow.template) {
-          throw new Error('missing required field: template');
         }
         workflows.push(workflow);
       } catch (err) {

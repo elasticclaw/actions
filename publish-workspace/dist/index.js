@@ -29169,9 +29169,6 @@ async function run() {
                 if (!workflow.name) {
                     throw new Error('missing required field: name');
                 }
-                if (!workflow.template) {
-                    throw new Error('missing required field: template');
-                }
                 workflows.push(workflow);
             }
             catch (err) {
