@@ -29,11 +29,13 @@ Push a workspace and its workflows to an ElasticClaw hub.
 
 ## Layout
 
-The action expects a workspace directory with a `workspace.yaml` or `workspace.yml` file and optional workflow definitions in `workflows/*.yaml`.
+The action expects a workspace directory with an `elasticclaw-config.yaml` file and optional workflow definitions in `workflows/*.yaml`.
 
 ```text
 bugbot/
-├── workspace.yaml
+├── elasticclaw-config.yaml
+├── AGENTS.md
+├── TOOLS.md
 └── workflows/
     ├── triage.yaml
     └── resolution.yaml

@@ -10,6 +10,7 @@ interface WorkspaceConfig {
   secrets?: string[];
   webhook_secrets?: string[];
   workflows?: WorkflowConfig[];
+  files?: Record<string, string>;
   [key: string]: unknown;
 }
 
@@ -104,16 +105,16 @@ async function run(): Promise<void> {
       throw new Error(`Workspace directory is empty: ${workspacePath}`);
     }
 
-    const workspaceYamlPath = Object.keys(files).find(f => f === 'workspace.yaml' || f === 'workspace.yml');
-    if (!workspaceYamlPath) {
-      throw new Error(`Workspace directory must contain a workspace.yaml or workspace.yml file: ${workspacePath}`);
+    const workspaceConfigPath = Object.keys(files).find(f => f === 'elasticclaw-config.yaml' || f === 'elasticclaw-config.yml' || f === 'workspace.yaml' || f === 'workspace.yml');
+    if (!workspaceConfigPath) {
+      throw new Error(`Workspace directory must contain an elasticclaw-config.yaml file: ${workspacePath}`);
     }
 
     let workspaceConfig: WorkspaceConfig;
     try {
-      workspaceConfig = parseYamlObject<WorkspaceConfig>(files[workspaceYamlPath], 'workspace.yaml');
+      workspaceConfig = parseYamlObject<WorkspaceConfig>(files[workspaceConfigPath], workspaceConfigPath);
     } catch (err) {
-      throw new Error(`Failed to parse workspace.yaml: ${err instanceof Error ? err.message : String(err)}`);
+      throw new Error(`Failed to parse ${workspaceConfigPath}: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     if (!workspaceConfig.name) {
@@ -138,6 +139,7 @@ async function run(): Promise<void> {
     }
 
     workspaceConfig.workflows = workflows;
+    workspaceConfig.files = files;
     const pushRequest: WorkspacePushRequest = { workspaces: [workspaceConfig] };
 
     if (dryRun) {

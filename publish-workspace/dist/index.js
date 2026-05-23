@@ -29145,16 +29145,16 @@ async function run() {
         if (Object.keys(files).length === 0) {
             throw new Error(`Workspace directory is empty: ${workspacePath}`);
         }
-        const workspaceYamlPath = Object.keys(files).find(f => f === 'workspace.yaml' || f === 'workspace.yml');
-        if (!workspaceYamlPath) {
-            throw new Error(`Workspace directory must contain a workspace.yaml or workspace.yml file: ${workspacePath}`);
+        const workspaceConfigPath = Object.keys(files).find(f => f === 'elasticclaw-config.yaml' || f === 'elasticclaw-config.yml' || f === 'workspace.yaml' || f === 'workspace.yml');
+        if (!workspaceConfigPath) {
+            throw new Error(`Workspace directory must contain an elasticclaw-config.yaml file: ${workspacePath}`);
         }
         let workspaceConfig;
         try {
-            workspaceConfig = parseYamlObject(files[workspaceYamlPath], 'workspace.yaml');
+            workspaceConfig = parseYamlObject(files[workspaceConfigPath], workspaceConfigPath);
         }
         catch (err) {
-            throw new Error(`Failed to parse workspace.yaml: ${err instanceof Error ? err.message : String(err)}`);
+            throw new Error(`Failed to parse ${workspaceConfigPath}: ${err instanceof Error ? err.message : String(err)}`);
         }
         if (!workspaceConfig.name) {
             throw new Error('Workspace config missing required field: name');
@@ -29176,6 +29176,7 @@ async function run() {
             }
         }
         workspaceConfig.workflows = workflows;
+        workspaceConfig.files = files;
         const pushRequest = { workspaces: [workspaceConfig] };
         if (dryRun) {
             core.info(`[dry-run] Would push workspace "${workspaceConfig.name}" with ${workflows.length} workflow(s) to ${hubEndpoint}/api/workspaces`);
