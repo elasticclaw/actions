@@ -1,0 +1,30 @@
+name: 'Publish Workflow to ElasticClaw Hub'
+description: 'Push a workflow to an ElasticClaw workspace'
+author: 'Marc Campbell <marc.e.campbell@gmail.com>'
+inputs:
+  hub-endpoint:
+    description: 'ElasticClaw hub URL (e.g., https://hub.elasticclaw.dev)'
+    required: true
+  token:
+    description: 'ElasticClaw hub API token'
+    required: true
+  workspace:
+    description: 'Workspace name to publish the workflow into'
+    required: true
+  path:
+    description: 'Path to the workflow YAML file'
+    required: true
+  dry-run:
+    description: 'Validate only, do not push'
+    required: false
+    default: 'false'
+outputs:
+  name:
+    description: 'Workflow name that was pushed'
+  workspace:
+    description: 'Workspace the workflow was pushed into'
+  pushed:
+    description: 'Whether the workflow was actually pushed (false if dry-run)'
+runs:
+  using: 'node20'
+  main: 'dist/index.js'

@@ -1,31 +1,32 @@
 # ElasticClaw GitHub Actions
 
-GitHub Actions for publishing factories and templates to an ElasticClaw hub.
+GitHub Actions for publishing workspaces and workflows to an ElasticClaw hub.
 
 ## Actions
 
-### [`publish-factory`](./publish-factory)
+### [`publish-workspace`](./publish-workspace)
 
-Push a single factory definition to an ElasticClaw hub.
+Push or validate a workspace.
 
 ```yaml
-- uses: elasticclaw/actions/publish-factory@main
+- uses: elasticclaw/actions/publish-workspace@main
   with:
     hub-endpoint: https://hub.elasticclaw.dev
     token: ${{ secrets.ELASTICCLAW_TOKEN }}
-    path: ./factories/my-factory
+    path: ./.elasticclaw/workspaces/bugbot
 ```
 
-### [`publish-template`](./publish-template)
+### [`publish-workflow`](./publish-workflow)
 
-Push a single template directory to an ElasticClaw hub.
+Push or validate a workflow in a workspace.
 
 ```yaml
-- uses: elasticclaw/actions/publish-template@main
+- uses: elasticclaw/actions/publish-workflow@main
   with:
     hub-endpoint: https://hub.elasticclaw.dev
     token: ${{ secrets.ELASTICCLAW_TOKEN }}
-    path: ./templates/my-template
+    workspace: bugbot
+    path: ./.elasticclaw/workflows/triage.yaml
 ```
 
 ## License
