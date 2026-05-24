@@ -9,35 +9,7 @@ interface WorkspaceConfig {
   repositories?: string[];
   secrets?: string[];
   webhook_secrets?: string[];
-  workflows?: WorkflowConfig[];
   files?: Record<string, string>;
-  [key: string]: unknown;
-}
-
-interface WorkflowConfig {
-  schema_version?: string;
-  name: string;
-  integration?: string;
-  workspace?: string;
-  team?: string;
-  trigger_status?: string;
-  working_status?: string;
-  finished_status?: string;
-  terminate_on_leave?: boolean;
-  provider?: string;
-  name_pattern?: string;
-  tags?: string[];
-  color?: string;
-  labels?: string[];
-  assigned_to?: string;
-  allowed_labelers?: string[];
-  secret_refs?: Record<string, string>;
-  inputs?: unknown[];
-  concurrency_group?: string;
-  enable_manual_trigger?: boolean;
-  repos?: string[];
-  trigger_repos?: string[];
-  trigger?: unknown;
   [key: string]: unknown;
 }
 
@@ -64,6 +36,9 @@ function walkDirectory(dirPath: string, basePath: string, files: Record<string, 
     const relativePath = path.relative(basePath, fullPath);
 
     if (entry.isDirectory()) {
+      if (relativePath === 'workflows' || relativePath.startsWith(`workflows${path.sep}`)) {
+        continue;
+      }
       walkDirectory(fullPath, basePath, files);
     } else if (entry.isFile()) {
       if (!isTextFile(fullPath)) {
@@ -122,38 +97,17 @@ async function run(): Promise<void> {
       throw new Error('Workspace config missing required field: name');
     }
 
-    const workflowPaths = Object.keys(files)
-      .filter(f => /^workflows\/[^/]+\.ya?ml$/.test(f))
-      .sort();
-
-    const workflows: WorkflowConfig[] = [];
-    for (const workflowPath of workflowPaths) {
-      try {
-        const workflow = parseYamlObject<WorkflowConfig>(files[workflowPath], workflowPath);
-        if (!workflow.name) {
-          throw new Error('missing required field: name');
-        }
-        workflows.push(workflow);
-      } catch (err) {
-        throw new Error(`Failed to parse ${workflowPath}: ${err instanceof Error ? err.message : String(err)}`);
-      }
-    }
-
-    if (workspaceConfig.workflows && workspaceConfig.workflows.length > 0) {
-      core.warning(`Workspace config already contains ${workspaceConfig.workflows.length} inline workflow(s); they will be replaced by the ${workflows.length} workflow file(s) found in workflows/`);
-    }
-    workspaceConfig.workflows = workflows;
+    delete workspaceConfig.workflows;
     workspaceConfig.files = files;
     const pushRequest: WorkspacePushRequest = { workspaces: [workspaceConfig] };
 
     if (dryRun) {
-      core.info(`[dry-run] Would push workspace "${workspaceConfig.name}" with ${workflows.length} workflow(s) to ${hubEndpoint}/api/workspaces`);
+      core.info(`[dry-run] Would push workspace "${workspaceConfig.name}" to ${hubEndpoint}/api/workspaces`);
       core.info(`[dry-run] Files found (${Object.keys(files).length}):`);
       for (const filePath of Object.keys(files).sort()) {
         core.info(`  - ${filePath}`);
       }
       core.setOutput('name', workspaceConfig.name);
-      core.setOutput('workflows', String(workflows.length));
       core.setOutput('pushed', 'false');
       return;
     }
@@ -172,9 +126,8 @@ async function run(): Promise<void> {
       throw new Error(`Hub returned ${response.status}: ${body}`);
     }
 
-    core.info(`Successfully pushed workspace "${workspaceConfig.name}" with ${workflows.length} workflow(s)`);
+    core.info(`Successfully pushed workspace "${workspaceConfig.name}"`);
     core.setOutput('name', workspaceConfig.name);
-    core.setOutput('workflows', String(workflows.length));
     core.setOutput('pushed', 'true');
   } catch (error) {
     core.setFailed(error instanceof Error ? error.message : String(error));

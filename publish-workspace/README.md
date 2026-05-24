@@ -1,6 +1,6 @@
 # Publish Workspace
 
-Push a workspace and its workflows to an ElasticClaw hub.
+Push a workspace to an ElasticClaw hub.
 
 ```yaml
 - uses: elasticclaw/actions/publish-workspace@main
@@ -24,21 +24,17 @@ Push a workspace and its workflows to an ElasticClaw hub.
 | Output | Description |
 | --- | --- |
 | `name` | Workspace name that was pushed |
-| `workflows` | Number of workflows pushed |
 | `pushed` | Whether the workspace was actually pushed |
 
 ## Layout
 
-The action expects a workspace directory with an `elasticclaw-config.yaml` file and optional workflow definitions in `workflows/*.yaml`.
+The action expects a workspace directory with an `elasticclaw-config.yaml` file. Workflows are published separately with [`publish-workflow`](../publish-workflow).
 
 ```text
 bugbot/
 ├── elasticclaw-config.yaml
 ├── AGENTS.md
-├── TOOLS.md
-└── workflows/
-    ├── triage.yaml
-    └── resolution.yaml
+└── TOOLS.md
 ```
 
 Use `dry-run: true` to validate the workspace directory without pushing:

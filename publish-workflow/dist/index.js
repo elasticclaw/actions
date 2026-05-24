@@ -29110,9 +29110,6 @@ function walkDirectory(dirPath, basePath, files) {
         const fullPath = path.join(dirPath, entry.name);
         const relativePath = path.relative(basePath, fullPath);
         if (entry.isDirectory()) {
-            if (relativePath === 'workflows' || relativePath.startsWith(`workflows${path.sep}`)) {
-                continue;
-            }
             walkDirectory(fullPath, basePath, files);
         }
         else if (entry.isFile()) {
@@ -29135,48 +29132,35 @@ async function run() {
         const hubEndpoint = core.getInput('hub-endpoint', { required: true });
         const token = core.getInput('token', { required: true });
         core.setSecret(token);
-        const workspacePath = core.getInput('path', { required: true });
+        const workspace = core.getInput('workspace', { required: true });
+        const workflowPath = core.getInput('path', { required: true });
         const dryRun = core.getBooleanInput('dry-run');
-        if (!fs.existsSync(workspacePath)) {
-            throw new Error(`Workspace directory not found: ${workspacePath}`);
+        if (!fs.existsSync(workflowPath)) {
+            throw new Error(`Workflow file not found: ${workflowPath}`);
         }
-        const stats = fs.statSync(workspacePath);
-        if (!stats.isDirectory()) {
-            throw new Error(`Workspace path is not a directory: ${workspacePath}`);
+        const stats = fs.statSync(workflowPath);
+        if (!stats.isFile()) {
+            throw new Error(`Workflow path is not a file: ${workflowPath}`);
         }
-        const files = {};
-        walkDirectory(workspacePath, workspacePath, files);
-        if (Object.keys(files).length === 0) {
-            throw new Error(`Workspace directory is empty: ${workspacePath}`);
-        }
-        const workspaceConfigPath = Object.keys(files).find(f => f === 'elasticclaw-config.yaml' || f === 'elasticclaw-config.yml' || f === 'workspace.yaml' || f === 'workspace.yml');
-        if (!workspaceConfigPath) {
-            throw new Error(`Workspace directory must contain an elasticclaw-config.yaml file: ${workspacePath}`);
-        }
-        let workspaceConfig;
+        let workflow;
         try {
-            workspaceConfig = parseYamlObject(files[workspaceConfigPath], workspaceConfigPath);
+            workflow = parseYamlObject(fs.readFileSync(workflowPath, 'utf8'), path.basename(workflowPath));
         }
         catch (err) {
-            throw new Error(`Failed to parse ${workspaceConfigPath}: ${err instanceof Error ? err.message : String(err)}`);
+            throw new Error(`Failed to parse ${workflowPath}: ${err instanceof Error ? err.message : String(err)}`);
         }
-        if (!workspaceConfig.name) {
-            throw new Error('Workspace config missing required field: name');
+        if (!workflow.name) {
+            throw new Error('Workflow config missing required field: name');
         }
-        delete workspaceConfig.workflows;
-        workspaceConfig.files = files;
-        const pushRequest = { workspaces: [workspaceConfig] };
+        const pushRequest = { workflows: [workflow] };
         if (dryRun) {
-            core.info(`[dry-run] Would push workspace "${workspaceConfig.name}" to ${hubEndpoint}/api/workspaces`);
-            core.info(`[dry-run] Files found (${Object.keys(files).length}):`);
-            for (const filePath of Object.keys(files).sort()) {
-                core.info(`  - ${filePath}`);
-            }
-            core.setOutput('name', workspaceConfig.name);
+            core.info(`[dry-run] Would push workflow "${workflow.name}" to workspace "${workspace}"`);
+            core.setOutput('name', workflow.name);
+            core.setOutput('workspace', workspace);
             core.setOutput('pushed', 'false');
             return;
         }
-        const response = await fetch(`${hubEndpoint.replace(/\/$/, '')}/api/workspaces`, {
+        const response = await fetch(`${hubEndpoint.replace(/\/$/, '')}/api/workspaces/${encodeURIComponent(workspace)}/workflows`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -29188,8 +29172,9 @@ async function run() {
             const body = await response.text();
             throw new Error(`Hub returned ${response.status}: ${body}`);
         }
-        core.info(`Successfully pushed workspace "${workspaceConfig.name}"`);
-        core.setOutput('name', workspaceConfig.name);
+        core.info(`Successfully pushed workflow "${workflow.name}" to workspace "${workspace}"`);
+        core.setOutput('name', workflow.name);
+        core.setOutput('workspace', workspace);
         core.setOutput('pushed', 'true');
     }
     catch (error) {

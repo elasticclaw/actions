@@ -1,5 +1,5 @@
 name: 'Publish Workspace to ElasticClaw Hub'
-description: 'Push a workspace and its workflows to an ElasticClaw hub'
+description: 'Push a workspace to an ElasticClaw hub'
 author: 'Marc Campbell <marc.e.campbell@gmail.com>'
 inputs:
   hub-endpoint:
@@ -18,8 +18,6 @@ inputs:
 outputs:
   name:
     description: 'Workspace name that was pushed'
-  workflows:
-    description: 'Number of workflows pushed with the workspace'
   pushed:
     description: 'Whether the workspace was actually pushed (false if dry-run)'
 runs:
