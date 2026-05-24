@@ -29131,6 +29131,7 @@ async function run() {
     try {
         const hubEndpoint = core.getInput('hub-endpoint', { required: true });
         const token = core.getInput('token', { required: true });
+        core.setSecret(token);
         const workspacePath = core.getInput('path', { required: true });
         const dryRun = core.getBooleanInput('dry-run');
         if (!fs.existsSync(workspacePath)) {
@@ -29175,6 +29176,9 @@ async function run() {
                 throw new Error(`Failed to parse ${workflowPath}: ${err instanceof Error ? err.message : String(err)}`);
             }
         }
+        if (workspaceConfig.workflows && workspaceConfig.workflows.length > 0) {
+            core.warning(`Workspace config already contains ${workspaceConfig.workflows.length} inline workflow(s); they will be replaced by the ${workflows.length} workflow file(s) found in workflows/`);
+        }
         workspaceConfig.workflows = workflows;
         workspaceConfig.files = files;
         const pushRequest = { workspaces: [workspaceConfig] };
@@ -29189,7 +29193,7 @@ async function run() {
             core.setOutput('pushed', 'false');
             return;
         }
-        const response = await fetch(`${hubEndpoint}/api/workspaces`, {
+        const response = await fetch(`${hubEndpoint.replace(/\/$/, '')}/api/workspaces`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
