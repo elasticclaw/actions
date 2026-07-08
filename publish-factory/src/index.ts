@@ -57,7 +57,7 @@ function walkDirectory(dirPath: string, basePath: string, files: Record<string, 
 
 async function run(): Promise<void> {
   try {
-    const hubEndpoint = core.getInput('hub-endpoint', { required: true });
+    const hubEndpoint = core.getInput('hub-endpoint', { required: true }).replace(/\/$/, '');
     const token = core.getInput('token', { required: true });
     core.setSecret(token);
     const factoryPath = core.getInput('path', { required: true });
@@ -122,7 +122,7 @@ async function run(): Promise<void> {
     }
 
     // Push to hub
-    const response = await fetch(`${hubEndpoint.replace(/\/$/, '')}/api/factories`, {
+    const response = await fetch(`${hubEndpoint}/api/factories`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

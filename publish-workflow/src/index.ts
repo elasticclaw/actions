@@ -27,7 +27,7 @@ function parseYamlObject<T>(content: string, label: string): T {
 
 async function run(): Promise<void> {
   try {
-    const hubEndpoint = core.getInput('hub-endpoint', { required: true });
+    const hubEndpoint = core.getInput('hub-endpoint', { required: true }).replace(/\/$/, '');
     const token = core.getInput('token', { required: true });
     core.setSecret(token);
     const workspace = core.getInput('workspace', { required: true });
@@ -67,7 +67,7 @@ async function run(): Promise<void> {
       return;
     }
 
-    const response = await fetch(`${hubEndpoint.replace(/\/$/, '')}/api/workspaces/${encodeURIComponent(workspace)}/workflows`, {
+    const response = await fetch(`${hubEndpoint}/api/workspaces/${encodeURIComponent(workspace)}/workflows`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
