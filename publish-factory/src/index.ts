@@ -16,12 +16,20 @@ interface FactoryConfig {
   webhook_secret?: string;
   webhook_secret_ref?: string;
   pipeline_yaml?: string;
+  schema_version?: string;
   [key: string]: unknown;
 }
 
 interface FactoryPushRequest {
   factories: FactoryConfig[];
 }
+
+// The hub's Go types use YAML snake_case tags for reading files but JSON
+// camelCase tags for the push API. The only mismatched factory key is
+// schema_version, which the server expects as schemaVersion.
+const FACTORY_KEY_MAP: Record<string, string> = {
+  schema_version: 'schemaVersion',
+};
 
 function isTextFile(filePath: string): boolean {
   const buffer = fs.readFileSync(filePath);
@@ -53,10 +61,23 @@ function walkDirectory(dirPath: string, basePath: string, files: Record<string, 
   }
 }
 
+function remapKeys(obj: Record<string, unknown>, keyMap: Record<string, string>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    result[keyMap[key] ?? key] = value;
+  }
+  return result;
+}
+
+function transformFactoryForJSON(factory: FactoryConfig): FactoryConfig {
+  return remapKeys(factory, FACTORY_KEY_MAP) as FactoryConfig;
+}
+
 async function run(): Promise<void> {
   try {
     const hubEndpoint = core.getInput('hub-endpoint', { required: true });
     const token = core.getInput('token', { required: true });
+    core.setSecret(token);
     const factoryPath = core.getInput('path', { required: true });
     const dryRun = core.getBooleanInput('dry-run');
 
@@ -105,7 +126,7 @@ async function run(): Promise<void> {
       factoryConfig.pipeline_yaml = files[pipelineYamlPath];
     }
 
-    const pushRequest: FactoryPushRequest = { factories: [factoryConfig] };
+    const pushRequest: FactoryPushRequest = { factories: [transformFactoryForJSON(factoryConfig)] };
 
     if (dryRun) {
       core.info(`[dry-run] Would push factory "${factoryConfig.name}" to ${hubEndpoint}/api/factories`);
@@ -119,7 +140,7 @@ async function run(): Promise<void> {
     }
 
     // Push to hub
-    const response = await fetch(`${hubEndpoint}/api/factories`, {
+    const response = await fetch(`${hubEndpoint.replace(/\/$/, '')}/api/factories`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
