@@ -1,0 +1,31 @@
+name: Test Actions
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Test publish-workflow
+        working-directory: ./publish-workflow
+        run: |
+          npm ci
+          npm test
+          npm run build
+      - name: Test publish-factory
+        working-directory: ./publish-factory
+        run: |
+          npm ci
+          npm test
+          npm run build
+      - name: Ensure dist bundles are committed
+        run: |
+          git diff --exit-code publish-workflow/dist/index.js publish-factory/dist/index.js

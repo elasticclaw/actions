@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
+import { transformFactoryForJSON } from './transform';
 
 interface FactoryConfig {
   name: string;
@@ -23,13 +24,6 @@ interface FactoryConfig {
 interface FactoryPushRequest {
   factories: FactoryConfig[];
 }
-
-// The hub's Go types use YAML snake_case tags for reading files but JSON
-// camelCase tags for the push API. The only mismatched factory key is
-// schema_version, which the server expects as schemaVersion.
-const FACTORY_KEY_MAP: Record<string, string> = {
-  schema_version: 'schemaVersion',
-};
 
 function isTextFile(filePath: string): boolean {
   const buffer = fs.readFileSync(filePath);
@@ -59,18 +53,6 @@ function walkDirectory(dirPath: string, basePath: string, files: Record<string, 
       files[relativePath] = content;
     }
   }
-}
-
-function remapKeys(obj: Record<string, unknown>, keyMap: Record<string, string>): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(obj)) {
-    result[keyMap[key] ?? key] = value;
-  }
-  return result;
-}
-
-function transformFactoryForJSON(factory: FactoryConfig): FactoryConfig {
-  return remapKeys(factory, FACTORY_KEY_MAP) as FactoryConfig;
 }
 
 async function run(): Promise<void> {

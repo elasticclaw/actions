@@ -29770,12 +29770,7 @@ const core = __importStar(__nccwpck_require__(7484));
 const fs = __importStar(__nccwpck_require__(9896));
 const path = __importStar(__nccwpck_require__(6928));
 const yaml = __importStar(__nccwpck_require__(4281));
-// The hub's Go types use YAML snake_case tags for reading files but JSON
-// camelCase tags for the push API. The only mismatched factory key is
-// schema_version, which the server expects as schemaVersion.
-const FACTORY_KEY_MAP = {
-    schema_version: 'schemaVersion',
-};
+const transform_1 = __nccwpck_require__(5971);
 function isTextFile(filePath) {
     const buffer = fs.readFileSync(filePath);
     const sample = buffer.slice(0, 8192);
@@ -29802,16 +29797,6 @@ function walkDirectory(dirPath, basePath, files) {
             files[relativePath] = content;
         }
     }
-}
-function remapKeys(obj, keyMap) {
-    const result = {};
-    for (const [key, value] of Object.entries(obj)) {
-        result[keyMap[key] ?? key] = value;
-    }
-    return result;
-}
-function transformFactoryForJSON(factory) {
-    return remapKeys(factory, FACTORY_KEY_MAP);
 }
 async function run() {
     try {
@@ -29858,7 +29843,7 @@ async function run() {
         if (pipelineYamlPath && !factoryConfig.pipeline_yaml) {
             factoryConfig.pipeline_yaml = files[pipelineYamlPath];
         }
-        const pushRequest = { factories: [transformFactoryForJSON(factoryConfig)] };
+        const pushRequest = { factories: [(0, transform_1.transformFactoryForJSON)(factoryConfig)] };
         if (dryRun) {
             core.info(`[dry-run] Would push factory "${factoryConfig.name}" to ${hubEndpoint}/api/factories`);
             core.info(`[dry-run] Files found (${Object.keys(files).length}):`);
@@ -29892,6 +29877,35 @@ async function run() {
     }
 }
 run();
+
+
+/***/ }),
+
+/***/ 5971:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.FACTORY_KEY_MAP = void 0;
+exports.remapKeys = remapKeys;
+exports.transformFactoryForJSON = transformFactoryForJSON;
+// The hub's Go types use YAML snake_case tags for reading files but JSON
+// camelCase tags for the push API. The only mismatched factory key is
+// schema_version, which the server expects as schemaVersion.
+exports.FACTORY_KEY_MAP = {
+    schema_version: 'schemaVersion',
+};
+function remapKeys(obj, keyMap) {
+    const result = {};
+    for (const [key, value] of Object.entries(obj)) {
+        result[keyMap[key] ?? key] = value;
+    }
+    return result;
+}
+function transformFactoryForJSON(factory) {
+    return remapKeys(factory, exports.FACTORY_KEY_MAP);
+}
 
 
 /***/ }),

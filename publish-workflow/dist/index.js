@@ -29770,42 +29770,13 @@ const core = __importStar(__nccwpck_require__(7484));
 const fs = __importStar(__nccwpck_require__(9896));
 const path = __importStar(__nccwpck_require__(6928));
 const yaml = __importStar(__nccwpck_require__(4281));
-// Key mappings from YAML snake_case keys to the camelCase JSON keys the hub
-// server uses for WorkflowConfig. Fields that already match are omitted.
-const WORKFLOW_KEY_MAP = {
-    schema_version: 'schemaVersion',
-    pipeline_yaml: 'pipelineYAML',
-};
-const STAGE_KEY_MAP = {
-    on_enter: 'onEnter',
-    skip_if: 'skipIf',
-    skip_unless: 'skipUnless',
-};
+const transform_1 = __nccwpck_require__(5971);
 function parseYamlObject(content, label) {
     const parsed = yaml.load(content);
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
         throw new Error(`${label} must contain a YAML object`);
     }
     return parsed;
-}
-function remapKeys(obj, keyMap) {
-    const result = {};
-    for (const [key, value] of Object.entries(obj)) {
-        result[keyMap[key] ?? key] = value;
-    }
-    return result;
-}
-function transformWorkflowForJSON(workflow) {
-    const transformed = remapKeys(workflow, WORKFLOW_KEY_MAP);
-    if (Array.isArray(transformed.stages)) {
-        transformed.stages = transformed.stages.map(stage => {
-            if (stage && typeof stage === 'object' && !Array.isArray(stage)) {
-                return remapKeys(stage, STAGE_KEY_MAP);
-            }
-            return stage;
-        });
-    }
-    return transformed;
 }
 async function run() {
     try {
@@ -29834,7 +29805,7 @@ async function run() {
             throw new Error('Workflow config missing required field: name');
         }
         workflow.rawConfig = rawConfig;
-        const pushRequest = { workflows: [transformWorkflowForJSON(workflow)] };
+        const pushRequest = { workflows: [(0, transform_1.transformWorkflowForJSON)(workflow)] };
         if (dryRun) {
             core.info(`[dry-run] Would push workflow "${workflow.name}" to workspace "${workspace}"`);
             core.setOutput('name', workflow.name);
@@ -29864,6 +29835,49 @@ async function run() {
     }
 }
 run();
+
+
+/***/ }),
+
+/***/ 5971:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.STAGE_KEY_MAP = exports.WORKFLOW_KEY_MAP = void 0;
+exports.remapKeys = remapKeys;
+exports.transformWorkflowForJSON = transformWorkflowForJSON;
+// Key mappings from YAML snake_case keys to the camelCase JSON keys the hub
+// server uses for WorkflowConfig. Fields that already match are omitted.
+exports.WORKFLOW_KEY_MAP = {
+    schema_version: 'schemaVersion',
+    pipeline_yaml: 'pipelineYAML',
+};
+exports.STAGE_KEY_MAP = {
+    on_enter: 'onEnter',
+    skip_if: 'skipIf',
+    skip_unless: 'skipUnless',
+};
+function remapKeys(obj, keyMap) {
+    const result = {};
+    for (const [key, value] of Object.entries(obj)) {
+        result[keyMap[key] ?? key] = value;
+    }
+    return result;
+}
+function transformWorkflowForJSON(workflow) {
+    const transformed = remapKeys(workflow, exports.WORKFLOW_KEY_MAP);
+    if (Array.isArray(transformed.stages)) {
+        transformed.stages = transformed.stages.map(stage => {
+            if (stage && typeof stage === 'object' && !Array.isArray(stage)) {
+                return remapKeys(stage, exports.STAGE_KEY_MAP);
+            }
+            return stage;
+        });
+    }
+    return transformed;
+}
 
 
 /***/ }),
