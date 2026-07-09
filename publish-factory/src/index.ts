@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
+import { transformFactoryForJSON } from './transform';
 
 interface FactoryConfig {
   name: string;
@@ -16,6 +17,7 @@ interface FactoryConfig {
   webhook_secret?: string;
   webhook_secret_ref?: string;
   pipeline_yaml?: string;
+  schema_version?: string;
   [key: string]: unknown;
 }
 
@@ -55,8 +57,9 @@ function walkDirectory(dirPath: string, basePath: string, files: Record<string, 
 
 async function run(): Promise<void> {
   try {
-    const hubEndpoint = core.getInput('hub-endpoint', { required: true });
+    const hubEndpoint = core.getInput('hub-endpoint', { required: true }).replace(/\/$/, '');
     const token = core.getInput('token', { required: true });
+    core.setSecret(token);
     const factoryPath = core.getInput('path', { required: true });
     const dryRun = core.getBooleanInput('dry-run');
 
@@ -105,7 +108,7 @@ async function run(): Promise<void> {
       factoryConfig.pipeline_yaml = files[pipelineYamlPath];
     }
 
-    const pushRequest: FactoryPushRequest = { factories: [factoryConfig] };
+    const pushRequest: FactoryPushRequest = { factories: [transformFactoryForJSON(factoryConfig)] };
 
     if (dryRun) {
       core.info(`[dry-run] Would push factory "${factoryConfig.name}" to ${hubEndpoint}/api/factories`);

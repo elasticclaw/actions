@@ -2,12 +2,14 @@ import * as core from '@actions/core';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
+import { transformWorkflowForJSON } from './transform';
 
 interface WorkflowConfig {
   schema_version?: string;
   name: string;
   trigger?: unknown;
   stages?: unknown[];
+  rawConfig?: string;
   [key: string]: unknown;
 }
 
@@ -25,7 +27,7 @@ function parseYamlObject<T>(content: string, label: string): T {
 
 async function run(): Promise<void> {
   try {
-    const hubEndpoint = core.getInput('hub-endpoint', { required: true });
+    const hubEndpoint = core.getInput('hub-endpoint', { required: true }).replace(/\/$/, '');
     const token = core.getInput('token', { required: true });
     core.setSecret(token);
     const workspace = core.getInput('workspace', { required: true });
@@ -41,9 +43,11 @@ async function run(): Promise<void> {
       throw new Error(`Workflow path is not a file: ${workflowPath}`);
     }
 
+    const rawConfig = fs.readFileSync(workflowPath, 'utf8');
+
     let workflow: WorkflowConfig;
     try {
-      workflow = parseYamlObject<WorkflowConfig>(fs.readFileSync(workflowPath, 'utf8'), path.basename(workflowPath));
+      workflow = parseYamlObject<WorkflowConfig>(rawConfig, path.basename(workflowPath));
     } catch (err) {
       throw new Error(`Failed to parse ${workflowPath}: ${err instanceof Error ? err.message : String(err)}`);
     }
@@ -52,7 +56,8 @@ async function run(): Promise<void> {
       throw new Error('Workflow config missing required field: name');
     }
 
-    const pushRequest: WorkflowPushRequest = { workflows: [workflow] };
+    workflow.rawConfig = rawConfig;
+    const pushRequest: WorkflowPushRequest = { workflows: [transformWorkflowForJSON(workflow)] };
 
     if (dryRun) {
       core.info(`[dry-run] Would push workflow "${workflow.name}" to workspace "${workspace}"`);
@@ -62,7 +67,7 @@ async function run(): Promise<void> {
       return;
     }
 
-    const response = await fetch(`${hubEndpoint.replace(/\/$/, '')}/api/workspaces/${encodeURIComponent(workspace)}/workflows`, {
+    const response = await fetch(`${hubEndpoint}/api/workspaces/${encodeURIComponent(workspace)}/workflows`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

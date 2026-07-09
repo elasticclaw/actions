@@ -26,5 +26,5 @@ outputs:
   pushed:
     description: 'Whether the template was actually pushed (false if dry-run)'
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'dist/index.js'

@@ -40,7 +40,7 @@ function walkDirectory(dirPath: string, basePath: string, files: Record<string, 
 
 async function run(): Promise<void> {
   try {
-    const hubEndpoint = core.getInput('hub-endpoint', { required: true });
+    const hubEndpoint = core.getInput('hub-endpoint', { required: true }).replace(/\/$/, '');
     const token = core.getInput('token', { required: true });
     const templatePath = core.getInput('path', { required: true });
     const nameOverride = core.getInput('name');
