@@ -2,19 +2,10 @@ import * as core from '@actions/core';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
-
-interface WorkspaceConfig {
-  schema_version?: string;
-  name: string;
-  repositories?: string[];
-  secrets?: string[];
-  webhook_secrets?: string[];
-  files?: Record<string, string>;
-  [key: string]: unknown;
-}
+import { transformWorkspaceForJSON, WorkspaceLike } from './transform';
 
 interface WorkspacePushRequest {
-  workspaces: WorkspaceConfig[];
+  workspaces: Record<string, unknown>[];
 }
 
 function isTextFile(filePath: string): boolean {
@@ -86,9 +77,9 @@ async function run(): Promise<void> {
       throw new Error(`Workspace directory must contain an elasticclaw-config.yaml file: ${workspacePath}`);
     }
 
-    let workspaceConfig: WorkspaceConfig;
+    let workspaceConfig: WorkspaceLike;
     try {
-      workspaceConfig = parseYamlObject<WorkspaceConfig>(files[workspaceConfigPath], workspaceConfigPath);
+      workspaceConfig = parseYamlObject<WorkspaceLike>(files[workspaceConfigPath], workspaceConfigPath);
     } catch (err) {
       throw new Error(`Failed to parse ${workspaceConfigPath}: ${err instanceof Error ? err.message : String(err)}`);
     }
@@ -97,9 +88,9 @@ async function run(): Promise<void> {
       throw new Error('Workspace config missing required field: name');
     }
 
-    delete workspaceConfig.workflows;
-    workspaceConfig.files = files;
-    const pushRequest: WorkspacePushRequest = { workspaces: [workspaceConfig] };
+    const pushRequest: WorkspacePushRequest = {
+      workspaces: [transformWorkspaceForJSON(workspaceConfig, files, files[workspaceConfigPath])],
+    };
 
     if (dryRun) {
       core.info(`[dry-run] Would push workspace "${workspaceConfig.name}" to ${hubEndpoint}/api/workspaces`);
