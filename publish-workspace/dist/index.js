@@ -29770,6 +29770,7 @@ const core = __importStar(__nccwpck_require__(7484));
 const fs = __importStar(__nccwpck_require__(9896));
 const path = __importStar(__nccwpck_require__(6928));
 const yaml = __importStar(__nccwpck_require__(4281));
+const transform_1 = __nccwpck_require__(5971);
 function isTextFile(filePath) {
     const buffer = fs.readFileSync(filePath);
     const sample = buffer.slice(0, 8192);
@@ -29839,9 +29840,9 @@ async function run() {
         if (!workspaceConfig.name) {
             throw new Error('Workspace config missing required field: name');
         }
-        delete workspaceConfig.workflows;
-        workspaceConfig.files = files;
-        const pushRequest = { workspaces: [workspaceConfig] };
+        const pushRequest = {
+            workspaces: [(0, transform_1.transformWorkspaceForJSON)(workspaceConfig, files, files[workspaceConfigPath])],
+        };
         if (dryRun) {
             core.info(`[dry-run] Would push workspace "${workspaceConfig.name}" to ${hubEndpoint}/api/workspaces`);
             core.info(`[dry-run] Files found (${Object.keys(files).length}):`);
@@ -29873,6 +29874,47 @@ async function run() {
     }
 }
 run();
+
+
+/***/ }),
+
+/***/ 5971:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Transform workspace configs into the JSON push payload the hub expects.
+// Mirrors readWorkspaceDir in the elasticclaw CLI (cmd/workspace.go).
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isV2Schema = isV2Schema;
+exports.transformWorkspaceForJSON = transformWorkspaceForJSON;
+// isV2Schema mirrors v2.IsV2 in the elasticclaw CLI: the v2 schema is
+// identified by "2" or "v2", case-insensitive. js-yaml parses an unquoted
+// `schema_version: 2` as a number, so the value is stringified first.
+function isV2Schema(version) {
+    const v = String(version ?? '').trim().toLowerCase();
+    return v === '2' || v === 'v2';
+}
+// transformWorkspaceForJSON builds the POST /api/workspaces payload for one
+// workspace.
+//
+// V2 configs use map-shaped repositories/connections that cannot unmarshal
+// into the hub's v1-typed WorkspaceConfig (whose repositories field is a
+// list), so the typed payload is reduced to schemaVersion + name and the raw
+// authored YAML rides in files["elasticclaw-config.yaml"] for the hub to
+// validate and store. V1 configs keep their historical shape: the parsed
+// config is sent verbatim (minus the workflows key) with files attached.
+function transformWorkspaceForJSON(workspace, files, rawConfig) {
+    const { workflows: _workflows, ...rest } = workspace;
+    if (isV2Schema(workspace.schema_version)) {
+        return {
+            schemaVersion: '2',
+            name: workspace.name,
+            files: { ...files, 'elasticclaw-config.yaml': rawConfig },
+        };
+    }
+    return { ...rest, files };
+}
 
 
 /***/ }),
