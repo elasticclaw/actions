@@ -1,0 +1,27 @@
+publish-workspace/src/transform.ts
+  s_1f7af9e4e277d0::t_3be17a5ae6f998 1-41
+publish-workspace/src/index.ts
+  s_1f7af9e4e277d0::t_d11160ad1e4828 5,8
+  s_1f7af9e4e277d0::t_cec66e56527cb6 80,82,91-93
+publish-workspace/dist/index.js
+  s_1f7af9e4e277d0::t_91cee0ad4dbebe 29773,29843-29845,29879-29917
+  s_1f7af9e4e277d0::t_7eaa7ef67fbceb 29918-29919
+publish-workspace/src/transform.test.ts
+  s_1f7af9e4e277d0::t_f465451a8790ce 1-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "25ff4cb71b0efe038104f016c448df77eaf85792",
+  "prompts": {},
+  "sessions": {
+    "s_1f7af9e4e277d0": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ecdc2c56bffeptPVFCLBhmYJ8a",
+        "model": "accounts/fireworks/routers/kimi-latest"
+      },
+      "human_author": "ElasticClaw Factory <factory@replicated.com>"
+    }
+  }
+}
