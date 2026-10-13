@@ -2,19 +2,10 @@ import * as core from '@actions/core';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
-import { transformWorkflowForJSON } from './transform';
-
-interface WorkflowConfig {
-  schema_version?: string;
-  name: string;
-  trigger?: unknown;
-  stages?: unknown[];
-  rawConfig?: string;
-  [key: string]: unknown;
-}
+import { transformWorkflowForJSON, WorkflowLike } from './transform';
 
 interface WorkflowPushRequest {
-  workflows: WorkflowConfig[];
+  workflows: WorkflowLike[];
 }
 
 function parseYamlObject<T>(content: string, label: string): T {
@@ -45,9 +36,9 @@ async function run(): Promise<void> {
 
     const rawConfig = fs.readFileSync(workflowPath, 'utf8');
 
-    let workflow: WorkflowConfig;
+    let workflow: WorkflowLike;
     try {
-      workflow = parseYamlObject<WorkflowConfig>(rawConfig, path.basename(workflowPath));
+      workflow = parseYamlObject<WorkflowLike>(rawConfig, path.basename(workflowPath));
     } catch (err) {
       throw new Error(`Failed to parse ${workflowPath}: ${err instanceof Error ? err.message : String(err)}`);
     }
